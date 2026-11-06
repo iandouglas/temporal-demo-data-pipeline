@@ -21,6 +21,14 @@ async def get_client() -> Client:
     host_url = os.getenv("TEMPORAL_HOST_URL")
     namespace = os.getenv("TEMPORAL_NAMESPACE")
 
+    api_key = os.getenv("TEMPORAL_API_KEY")
+    if api_key:
+        if not host_url or not namespace:
+            raise ValueError("TEMPORAL_HOST_URL and TEMPORAL_NAMESPACE are required with an API key")
+        converter = temporalio.converter.default()
+        if encrypt_payloads:
+            converter = dataclasses.replace(converter, payload_codec=EncryptionCodec())
+        return await Client.connect(host_url, namespace=namespace, api_key=api_key, tls=True, data_converter=converter)
     if tls_cert and tls_key:
         server_root_ca_cert: bytes | None = None
         with open(tls_cert, "rb") as f:
@@ -57,7 +65,8 @@ async def get_client() -> Client:
             )
     else:
         client = await Client.connect(
-            "localhost:7233",
+            host_url or "localhost:7233",
+            namespace=namespace or "default",
         )
 
     return client

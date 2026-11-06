@@ -1,3 +1,4 @@
+import os
 import uuid
 
 from flask import Flask, jsonify, render_template, request
@@ -61,14 +62,14 @@ async def run_job() -> str | tuple[str, int]:
             "DataPipelineWorkflowHappyPath",
             input,
             id=f"job-{job_id}",
-            task_queue="worker_specific_task_queue-distribution-queue",
+            task_queue=os.getenv("TEMPORAL_TASK_QUEUE", "worker_specific_task_queue-distribution-queue"),
         )
     else:
         await client.start_workflow(
             "DataPipeline" + selected_scenario,
             input,
             id=f"job-{job_id}",
-            task_queue="worker_specific_task_queue-distribution-queue",
+            task_queue=os.getenv("TEMPORAL_TASK_QUEUE", "worker_specific_task_queue-distribution-queue"),
         )
 
     return render_template("job_progress.html", selected_scenario=selected_scenario, job_id=job_id)

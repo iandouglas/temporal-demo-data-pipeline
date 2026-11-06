@@ -27,7 +27,7 @@ async def main() -> None:
     random.seed(667)
 
     # Create random task queues and build task queue selection function
-    task_queue: str = f"worker_specific_task_queue-host-{UUID(int=random.getrandbits(128))}"
+    task_queue: str = f"{os.getenv('TEMPORAL_TASK_QUEUE', 'worker_specific_task_queue')}-host-{UUID(int=random.getrandbits(128))}"
 
     @activity.defn(name="get_available_task_queue")
     async def select_task_queue() -> str:
@@ -41,7 +41,7 @@ async def main() -> None:
     run_futures = []
     handle = Worker(
         client,
-        task_queue="worker_specific_task_queue-distribution-queue",
+        task_queue=os.getenv("TEMPORAL_TASK_QUEUE", "worker_specific_task_queue-distribution-queue"),
         workflows=[DataPipelineWorkflowHappyPath, DataPipelineWorkflowScenarios],
         activities=[select_task_queue, validate],
     )
